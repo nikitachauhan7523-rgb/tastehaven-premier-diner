@@ -26,6 +26,9 @@ export const Route = createFileRoute("/")({
     meta: [
       { property: "og:image", content: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200" },
     ],
+    links: [
+      { rel: "preload", as: "image", href: heroFood, fetchpriority: "high" },
+    ],
   }),
 });
 
@@ -118,7 +121,7 @@ function useCounter(target: number, start: boolean, duration = 1600) {
 /* --------------------------------- Page ------------------------------- */
 
 function TasteHaven() {
-  const [loading, setLoading] = useState(true);
+  const loading = false;
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
@@ -136,10 +139,7 @@ function TasteHaven() {
 
   useReveal();
 
-  useEffect(() => {
-    const t = setTimeout(() => setLoading(false), 900);
-    return () => clearTimeout(t);
-  }, []);
+  useEffect(() => {}, []);
 
   useEffect(() => {
     const onScroll = () => {
@@ -208,16 +208,8 @@ function TasteHaven() {
 
   /* ------------------------------ Render ------------------------------ */
 
-  if (loading) {
-    return (
-      <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-background">
-        <div className="text-4xl font-display text-gradient-gold">Taste Haven</div>
-        <div className="mt-6 h-[2px] w-56 overflow-hidden rounded-full bg-secondary">
-          <div className="h-full w-1/3 loader-shimmer" />
-        </div>
-      </div>
-    );
-  }
+  void loading;
+
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -290,7 +282,7 @@ function TasteHaven() {
 
       {/* Hero */}
       <section id="home" className="relative isolate flex min-h-screen items-center overflow-hidden">
-        <img src={heroFood} alt="" className="absolute inset-0 h-full w-full object-cover" width={1920} height={1280} />
+        <img src={heroFood} alt="" className="absolute inset-0 h-full w-full object-cover" width={1920} height={1280} fetchPriority="high" decoding="async" />
         <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/70 to-background" />
         <div className="absolute inset-0 bg-radial-hero" />
 
