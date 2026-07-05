@@ -118,7 +118,7 @@ function useCounter(target: number, start: boolean, duration = 1600) {
 /* --------------------------------- Page ------------------------------- */
 
 function TasteHaven() {
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
