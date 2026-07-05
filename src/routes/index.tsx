@@ -205,16 +205,8 @@ function TasteHaven() {
 
   /* ------------------------------ Render ------------------------------ */
 
-  if (loading) {
-    return (
-      <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-background">
-        <div className="text-4xl font-display text-gradient-gold">Taste Haven</div>
-        <div className="mt-6 h-[2px] w-56 overflow-hidden rounded-full bg-secondary">
-          <div className="h-full w-1/3 loader-shimmer" />
-        </div>
-      </div>
-    );
-  }
+  void loading;
+
 
   return (
     <div className="min-h-screen bg-background text-foreground">
