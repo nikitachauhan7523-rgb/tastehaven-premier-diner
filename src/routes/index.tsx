@@ -26,6 +26,9 @@ export const Route = createFileRoute("/")({
     meta: [
       { property: "og:image", content: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200" },
     ],
+    links: [
+      { rel: "preload", as: "image", href: heroFood, fetchpriority: "high" },
+    ],
   }),
 });
 
