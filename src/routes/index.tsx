@@ -136,10 +136,7 @@ function TasteHaven() {
 
   useReveal();
 
-  useEffect(() => {
-    const t = setTimeout(() => setLoading(false), 900);
-    return () => clearTimeout(t);
-  }, []);
+  useEffect(() => {}, []);
 
   useEffect(() => {
     const onScroll = () => {
