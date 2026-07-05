@@ -2,98 +2,124 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { toast, Toaster } from "sonner";
 
-import heroFood from "@/assets/hero-food.jpg";
-import dishPizza from "@/assets/dish-pizza.jpg";
-import dishBurger from "@/assets/dish-burger.jpg";
-import dishPasta from "@/assets/dish-pasta.jpg";
-import dishIndian from "@/assets/dish-indian.jpg";
-import dishChinese from "@/assets/dish-chinese.jpg";
-import dishDessert from "@/assets/dish-dessert.jpg";
-import dishDrinks from "@/assets/dish-drinks.jpg";
-import gallery1 from "@/assets/gallery-1.jpg";
-import gallery2 from "@/assets/gallery-2.jpg";
-import gallery3 from "@/assets/gallery-3.jpg";
-import gallery4 from "@/assets/gallery-4.jpg";
-import gallery5 from "@/assets/gallery-5.jpg";
-import gallery6 from "@/assets/gallery-6.jpg";
-import chef1 from "@/assets/chef-1.jpg";
-import chef2 from "@/assets/chef-2.jpg";
-import chef3 from "@/assets/chef-3.jpg";
+// Unsplash placeholder imagery (fitness themed)
+const HERO_BG = "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=1920&q=80";
+const ABOUT_IMG = "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=1200&q=80";
 
 export const Route = createFileRoute("/")({
-  component: TasteHaven,
+  component: PowerFitGym,
   head: () => ({
     meta: [
-      { property: "og:image", content: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200" },
+      { property: "og:image", content: HERO_BG },
+      { name: "twitter:image", content: HERO_BG },
     ],
     links: [
-      { rel: "preload", as: "image", href: heroFood, fetchpriority: "high" },
+      { rel: "preload", as: "image", href: HERO_BG, fetchpriority: "high" },
     ],
   }),
 });
 
-/* -------------------------------- Data -------------------------------- */
+/* --------------------------------- Data --------------------------------- */
 
-type Category = "All" | "Pizza" | "Burgers" | "Pasta" | "Indian" | "Chinese" | "Desserts" | "Drinks";
-const CATEGORIES: Category[] = ["All", "Pizza", "Burgers", "Pasta", "Indian", "Chinese", "Desserts", "Drinks"];
+type ProgramCat = "All" | "Strength" | "Cardio" | "Mind" | "Group";
 
-interface Dish {
+interface Program {
   name: string;
-  category: Exclude<Category, "All">;
+  icon: string;
+  cat: Exclude<ProgramCat, "All">;
   desc: string;
-  price: number;
-  rating: number;
-  image: string;
+  duration: string;
+  level: "Beginner" | "Intermediate" | "Advanced" | "All levels";
+  img: string;
 }
 
-const DISHES: Dish[] = [
-  { name: "Margherita Regina", category: "Pizza", desc: "San Marzano tomato, buffalo mozzarella, fresh basil.", price: 18, rating: 4.9, image: dishPizza },
-  { name: "Truffle Smash Burger", category: "Burgers", desc: "Double patty, aged cheddar, black truffle aioli.", price: 22, rating: 4.8, image: dishBurger },
-  { name: "Tagliatelle al Tartufo", category: "Pasta", desc: "Hand-rolled pasta, parmesan cream, black truffle.", price: 26, rating: 4.9, image: dishPasta },
-  { name: "Butter Chicken Royale", category: "Indian", desc: "Tandoor chicken, tomato-cashew gravy, saffron rice.", price: 24, rating: 4.7, image: dishIndian },
-  { name: "Kung Pao Chicken", category: "Chinese", desc: "Wok-fired chicken, chili, cashews, Sichuan pepper.", price: 21, rating: 4.6, image: dishChinese },
-  { name: "Molten Gold Cake", category: "Desserts", desc: "Warm chocolate lava, vanilla bean, 24k gold leaf.", price: 14, rating: 5.0, image: dishDessert },
-  { name: "Smoked Old Fashioned", category: "Drinks", desc: "Bourbon, bitters, applewood smoke, orange oil.", price: 16, rating: 4.8, image: dishDrinks },
-  { name: "Diavola Fuoco", category: "Pizza", desc: "Spicy salami, chili honey, smoked mozzarella.", price: 20, rating: 4.7, image: dishPizza },
+const PROGRAMS: Program[] = [
+  { name: "Strength Training", icon: "fa-dumbbell", cat: "Strength", desc: "Build raw power with barbell fundamentals and progressive overload.", duration: "60 min", level: "Intermediate", img: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&w=800&q=80" },
+  { name: "Weight Loss", icon: "fa-fire-flame-curved", cat: "Cardio", desc: "High-intensity fat-burn circuits designed for lasting results.", duration: "45 min", level: "All levels", img: "https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=800&q=80" },
+  { name: "Cardio Fitness", icon: "fa-heart-pulse", cat: "Cardio", desc: "Boost endurance with treadmill, cycling and rowing intervals.", duration: "45 min", level: "Beginner", img: "https://images.unsplash.com/photo-1538805060514-97d9cc17730c?auto=format&fit=crop&w=800&q=80" },
+  { name: "Yoga", icon: "fa-spa", cat: "Mind", desc: "Improve flexibility, breath and mental clarity through vinyasa flow.", duration: "60 min", level: "All levels", img: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=800&q=80" },
+  { name: "CrossFit", icon: "fa-bolt", cat: "Strength", desc: "Constantly varied functional movements performed at high intensity.", duration: "60 min", level: "Advanced", img: "https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?auto=format&fit=crop&w=800&q=80" },
+  { name: "Functional Training", icon: "fa-person-running", cat: "Strength", desc: "Real-world strength for daily performance and injury prevention.", duration: "50 min", level: "Intermediate", img: "https://images.unsplash.com/photo-1550345332-09e3ac987658?auto=format&fit=crop&w=800&q=80" },
+  { name: "Personal Training", icon: "fa-user-shield", cat: "Strength", desc: "1-on-1 coaching with a custom plan tailored to your goals.", duration: "60 min", level: "All levels", img: "https://images.unsplash.com/photo-1594737625785-a6cbdabd333c?auto=format&fit=crop&w=800&q=80" },
+  { name: "Zumba", icon: "fa-music", cat: "Group", desc: "Dance-based cardio with Latin beats — burn calories while having fun.", duration: "45 min", level: "Beginner", img: "https://images.unsplash.com/photo-1524594152303-9fd13543fe6e?auto=format&fit=crop&w=800&q=80" },
 ];
 
-const OFFERS = [
-  { title: "20% Off Weekdays", desc: "Every Monday to Thursday, 5–7 PM. Enjoy the full menu at a warm discount.", tag: "Weekly", icon: "fa-percent" },
-  { title: "Buy One, Get One Pizza", desc: "Order any signature pizza and the second is on the house. Fridays only.", tag: "Friday", icon: "fa-pizza-slice" },
-  { title: "Free Dessert Over $50", desc: "A complimentary Molten Gold Cake with every order above $50.", tag: "Always", icon: "fa-cake-candles" },
+const PROGRAM_CATS: ProgramCat[] = ["All", "Strength", "Cardio", "Mind", "Group"];
+
+interface Trainer {
+  name: string;
+  role: string;
+  years: number;
+  certs: string;
+  img: string;
+}
+const TRAINERS: Trainer[] = [
+  { name: "Marcus Reed", role: "Head Strength Coach", years: 12, certs: "NSCA-CSCS · USAW", img: "https://images.unsplash.com/photo-1567013127542-490d757e51fc?auto=format&fit=crop&w=600&q=80" },
+  { name: "Sofia Alvarez", role: "CrossFit & HIIT", years: 8, certs: "CF-L3 · Precision Nutrition", img: "https://images.unsplash.com/photo-1548690312-e3b507d8c110?auto=format&fit=crop&w=600&q=80" },
+  { name: "Ethan Cole", role: "Personal Trainer", years: 10, certs: "NASM-CPT · FMS", img: "https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?auto=format&fit=crop&w=600&q=80" },
+  { name: "Priya Sharma", role: "Yoga & Mobility", years: 9, certs: "RYT-500 · YogaFit", img: "https://images.unsplash.com/photo-1609899537878-88d5ba429bdf?auto=format&fit=crop&w=600&q=80" },
 ];
 
-const TESTIMONIALS = [
-  { name: "Aarav Mehta", role: "Food Critic", rating: 5, text: "Every plate feels considered. The truffle tagliatelle is one of the finest bowls of pasta in the city." },
-  { name: "Sofia Alvarez", role: "Regular Guest", rating: 5, text: "The ambience is intimate, the service impeccable. Taste Haven is our anniversary tradition." },
-  { name: "Marcus Chen", role: "Chef & Blogger", rating: 4, text: "Bold flavors, quiet confidence. The kitchen respects ingredients — and it shows in every bite." },
-  { name: "Priya Kapoor", role: "Travel Writer", rating: 5, text: "From the smoked old fashioned to the butter chicken, this place hits every note perfectly." },
+interface Plan {
+  name: string;
+  price: number;
+  features: string[];
+  featured?: boolean;
+}
+const PLANS: Plan[] = [
+  { name: "Basic", price: 29, features: ["Gym floor access", "Locker room", "Free WiFi", "Standard hours (6a–10p)"] },
+  { name: "Standard", price: 59, features: ["Everything in Basic", "All group classes", "1 personal training session/mo", "24/7 access"], featured: true },
+  { name: "Premium", price: 99, features: ["Everything in Standard", "Unlimited PT sessions", "Nutrition coaching", "Sauna & recovery zone", "Guest passes"] },
 ];
 
-const CHEFS = [
-  { name: "Chef Antonio Rossi", role: "Executive Chef", image: chef1, bio: "20 years across Milan, Tokyo and New York. Champion of seasonal, ingredient-first cooking." },
-  { name: "Chef Elena Marín", role: "Head Pastry Chef", image: chef2, bio: "Trained in Paris. Her desserts blend classical French technique with playful modern twists." },
-  { name: "Chef Liam O'Connor", role: "Sous Chef", image: chef3, bio: "A grill master with a passion for smoke, char and the perfect medium-rare." },
+interface Slot { time: string; workout: string; trainer: string; room: string; }
+const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const SCHEDULE: Record<string, Slot[]> = {
+  Mon: [{ time: "6:00", workout: "Strength", trainer: "Marcus", room: "Hall A" }, { time: "9:00", workout: "Yoga", trainer: "Priya", room: "Studio" }, { time: "18:00", workout: "CrossFit", trainer: "Sofia", room: "Box" }],
+  Tue: [{ time: "7:00", workout: "HIIT", trainer: "Sofia", room: "Hall B" }, { time: "10:00", workout: "Zumba", trainer: "Priya", room: "Studio" }, { time: "19:00", workout: "Personal", trainer: "Ethan", room: "PT Room" }],
+  Wed: [{ time: "6:00", workout: "Cardio", trainer: "Ethan", room: "Cardio" }, { time: "11:00", workout: "Functional", trainer: "Marcus", room: "Hall A" }, { time: "18:30", workout: "Yoga Flow", trainer: "Priya", room: "Studio" }],
+  Thu: [{ time: "7:00", workout: "Strength", trainer: "Marcus", room: "Hall A" }, { time: "10:00", workout: "Weight Loss", trainer: "Sofia", room: "Hall B" }, { time: "20:00", workout: "CrossFit", trainer: "Sofia", room: "Box" }],
+  Fri: [{ time: "6:00", workout: "HIIT", trainer: "Sofia", room: "Hall B" }, { time: "12:00", workout: "Personal", trainer: "Ethan", room: "PT Room" }, { time: "18:00", workout: "Zumba", trainer: "Priya", room: "Studio" }],
+  Sat: [{ time: "9:00", workout: "Open Gym", trainer: "Staff", room: "Hall A" }, { time: "11:00", workout: "CrossFit", trainer: "Sofia", room: "Box" }, { time: "16:00", workout: "Yoga", trainer: "Priya", room: "Studio" }],
+};
+
+const GALLERY = [
+  "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=800&q=80",
+  "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=800&q=80",
+  "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&w=800&q=80",
+  "https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?auto=format&fit=crop&w=800&q=80",
+  "https://images.unsplash.com/photo-1594737625785-a6cbdabd333c?auto=format&fit=crop&w=800&q=80",
+  "https://images.unsplash.com/photo-1540497077202-7c8a3999166f?auto=format&fit=crop&w=800&q=80",
+  "https://images.unsplash.com/photo-1550345332-09e3ac987658?auto=format&fit=crop&w=800&q=80",
+  "https://images.unsplash.com/photo-1583500178690-593d0aecab8d?auto=format&fit=crop&w=800&q=80",
+  "https://images.unsplash.com/photo-1517963879433-6ad2b056d712?auto=format&fit=crop&w=800&q=80",
 ];
 
-const FAQS = [
-  { q: "Do I need a reservation?", a: "Reservations are highly recommended, especially on weekends. Walk-ins are welcome based on availability." },
-  { q: "Do you cater dietary restrictions?", a: "Yes — vegan, gluten-free and allergy-friendly options are available on every course. Please note it when reserving." },
-  { q: "Is there a dress code?", a: "Smart casual. We simply ask you to feel comfortable and confident in the room." },
-  { q: "Do you host private events?", a: "Absolutely. Our private dining room seats up to 30 guests with dedicated service and a bespoke menu." },
+interface Review { name: string; img: string; rating: number; text: string; }
+const REVIEWS: Review[] = [
+  { name: "Jordan M.", img: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80", rating: 5, text: "Lost 22 lbs in 4 months. Coaches actually care about your progress." },
+  { name: "Aisha K.", img: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80", rating: 5, text: "Best equipment, cleanest facility, and the CrossFit classes are unreal." },
+  { name: "Devon P.", img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80", rating: 4, text: "24/7 access changed my life. I train after night shifts with no problem." },
+  { name: "Riley S.", img: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=80", rating: 5, text: "The community is what keeps me coming. Feels like a second family." },
 ];
 
-const GALLERY = [gallery1, gallery2, gallery3, gallery4, gallery5, gallery6];
+interface FAQ { q: string; a: string; }
+const FAQS: FAQ[] = [
+  { q: "How do I sign up for a membership?", a: "Click Join Now, pick a plan, and complete checkout. Your access is active immediately." },
+  { q: "Do you offer personal training?", a: "Yes — every certified trainer is bookable directly. Standard and Premium plans include PT sessions." },
+  { q: "What's the cancellation policy?", a: "Cancel anytime with 14 days' notice. No hidden fees, no long-term contracts." },
+  { q: "What are the gym timings?", a: "Standard hours are 6am–10pm. Standard and Premium members enjoy 24/7 access with a keycard." },
+];
 
-/* ---------------------------- Reveal helper --------------------------- */
+const NAV = ["Home", "About", "Programs", "Trainers", "Pricing", "Gallery", "Testimonials", "Contact"];
+
+/* --------------------------- Hooks --------------------------- */
 
 function useReveal() {
   useEffect(() => {
-    const els = document.querySelectorAll<HTMLElement>(".reveal");
+    const els = document.querySelectorAll(".reveal");
     const io = new IntersectionObserver(
-      (entries) => {
-        for (const e of entries) if (e.isIntersecting) e.target.classList.add("in");
-      },
+      (entries) => entries.forEach((e) => e.isIntersecting && e.target.classList.add("in")),
       { threshold: 0.12 },
     );
     els.forEach((el) => io.observe(el));
@@ -102,687 +128,793 @@ function useReveal() {
 }
 
 function useCounter(target: number, start: boolean, duration = 1600) {
-  const [n, setN] = useState(0);
+  const [val, setVal] = useState(0);
   useEffect(() => {
     if (!start) return;
-    let raf = 0;
     const t0 = performance.now();
+    let raf = 0;
     const tick = (t: number) => {
       const p = Math.min(1, (t - t0) / duration);
-      setN(Math.floor(p * target));
+      setVal(Math.round(target * (1 - Math.pow(1 - p, 3))));
       if (p < 1) raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [start, target, duration]);
-  return n;
+  }, [target, start, duration]);
+  return val;
 }
 
-/* --------------------------------- Page ------------------------------- */
+function useCountdown(target: Date) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const i = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(i);
+  }, []);
+  const ms = Math.max(0, target.getTime() - now);
+  const s = Math.floor(ms / 1000);
+  return {
+    d: Math.floor(s / 86400),
+    h: Math.floor((s % 86400) / 3600),
+    m: Math.floor((s % 3600) / 60),
+    s: s % 60,
+  };
+}
 
-function TasteHaven() {
-  const loading = false;
+/* --------------------------- Component --------------------------- */
+
+function PowerFitGym() {
+  const [loaded, setLoaded] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
-  const [cat, setCat] = useState<Category>("All");
-  const [search, setSearch] = useState("");
-  const [cart, setCart] = useState(0);
-  const [flyKey, setFlyKey] = useState(0);
-  const [lightbox, setLightbox] = useState<string | null>(null);
-  const [tIndex, setTIndex] = useState(0);
-  const [openFaq, setOpenFaq] = useState<number | null>(0);
+  const [progress, setProgress] = useState(0);
   const [showTop, setShowTop] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [dark, setDark] = useState(true);
+  const [progCat, setProgCat] = useState<ProgramCat>("All");
+  const [search, setSearch] = useState("");
+  const [openFaq, setOpenFaq] = useState<number | null>(0);
+  const [reviewIdx, setReviewIdx] = useState(0);
+  const [lightbox, setLightbox] = useState<string | null>(null);
+  const [day, setDay] = useState(DAYS[0]);
 
-  const statsRef = useRef<HTMLDivElement | null>(null);
-  const [statsIn, setStatsIn] = useState(false);
+  const statsRef = useRef<HTMLDivElement>(null);
+  const [statsInView, setStatsInView] = useState(false);
 
   useReveal();
 
-  useEffect(() => {}, []);
+  useEffect(() => {
+    const t = setTimeout(() => setLoaded(true), 900);
+    return () => clearTimeout(t);
+  }, []);
 
   useEffect(() => {
     const onScroll = () => {
-      setScrolled(window.scrollY > 40);
-      setShowTop(window.scrollY > 500);
+      const h = document.documentElement.scrollHeight - window.innerHeight;
+      const y = window.scrollY;
+      setProgress(h > 0 ? (y / h) * 100 : 0);
+      setScrolled(y > 40);
+      setShowTop(y > 500);
     };
+    onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   useEffect(() => {
-    document.documentElement.classList.toggle("light", theme === "light");
-  }, [theme]);
-
-  useEffect(() => {
-    if (!statsRef.current) return;
+    const el = statsRef.current;
+    if (!el) return;
     const io = new IntersectionObserver(
-      ([e]) => e.isIntersecting && setStatsIn(true),
-      { threshold: 0.3 },
+      ([e]) => e.isIntersecting && setStatsInView(true),
+      { threshold: 0.35 },
     );
-    io.observe(statsRef.current);
+    io.observe(el);
     return () => io.disconnect();
   }, []);
 
   useEffect(() => {
-    const id = setInterval(() => setTIndex((i) => (i + 1) % TESTIMONIALS.length), 5000);
-    return () => clearInterval(id);
+    document.documentElement.classList.toggle("light", !dark);
+    document.documentElement.classList.toggle("dark", dark);
+  }, [dark]);
+
+  useEffect(() => {
+    const i = setInterval(() => setReviewIdx((v) => (v + 1) % REVIEWS.length), 5000);
+    return () => clearInterval(i);
   }, []);
 
-  const filtered = useMemo(() => {
+  const members = useCounter(5000, statsInView);
+  const trainersCount = useCounter(50, statsInView);
+  const years = useCounter(15, statsInView);
+  const access = useCounter(24, statsInView);
+
+  const promoEnd = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 7);
+    d.setHours(23, 59, 59, 0);
+    return d;
+  }, []);
+  const cd = useCountdown(promoEnd);
+
+  const filteredPrograms = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return DISHES.filter((d) => (cat === "All" || d.category === cat) && (q === "" || d.name.toLowerCase().includes(q) || d.desc.toLowerCase().includes(q)));
-  }, [cat, search]);
-
-  const addToCart = (name: string) => {
-    setCart((c) => c + 1);
-    setFlyKey((k) => k + 1);
-    toast.success(`${name} added to cart`);
-  };
-
-  const onReserve = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const fd = new FormData(e.currentTarget);
-    const name = String(fd.get("name") || "").trim();
-    const email = String(fd.get("email") || "").trim();
-    const phone = String(fd.get("phone") || "").trim();
-    const date = String(fd.get("date") || "");
-    const time = String(fd.get("time") || "");
-    if (!name || name.length > 80) return toast.error("Please enter a valid name.");
-    if (!/^\S+@\S+\.\S+$/.test(email)) return toast.error("Please enter a valid email.");
-    if (!/^[\d+\-\s()]{7,20}$/.test(phone)) return toast.error("Please enter a valid phone.");
-    if (!date || !time) return toast.error("Please pick a date and time.");
-    toast.success(`Table reserved, ${name}. See you soon!`);
-    e.currentTarget.reset();
-  };
-
-  const guests = useCounter(24500, statsIn);
-  const dishesCount = useCounter(120, statsIn);
-  const chefsCount = useCounter(15, statsIn);
-  const awards = useCounter(32, statsIn);
+    return PROGRAMS.filter(
+      (p) => (progCat === "All" || p.cat === progCat) && (!q || p.name.toLowerCase().includes(q)),
+    );
+  }, [progCat, search]);
 
   const scrollTo = (id: string) => {
-    setMobileOpen(false);
-    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: "smooth" });
+    setMenuOpen(false);
   };
 
-  /* ------------------------------ Render ------------------------------ */
-
-  void loading;
-
-
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <Toaster theme={theme} richColors position="top-right" />
-
-      {/* Nav */}
-      <header
-        className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${scrolled ? "bg-background/85 backdrop-blur-md border-b border-border" : "bg-transparent"}`}
+    <>
+      <div
+        className={`fixed inset-0 z-[100] flex items-center justify-center bg-background transition-opacity duration-500 ${loaded ? "pointer-events-none opacity-0" : "opacity-100"}`}
+        aria-hidden={loaded}
       >
-        <nav className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 md:px-8">
-          <button onClick={() => scrollTo("home")} className="flex items-center gap-2" aria-label="Taste Haven home">
-            <i className="fa-solid fa-utensils text-primary text-lg" />
-            <span className="font-display text-xl font-semibold tracking-wide">Taste <span className="text-gradient-gold">Haven</span></span>
-          </button>
+        <div className="flex flex-col items-center gap-4">
+          <i className="fa-solid fa-dumbbell text-5xl text-[color:var(--blood)] animate-pulse" />
+          <div className="h-1 w-48 overflow-hidden rounded-full bg-white/10">
+            <div className="h-full w-full loader-shimmer" />
+          </div>
+          <p className="font-display text-sm tracking-widest text-muted-foreground">POWERFIT GYM</p>
+        </div>
+      </div>
 
-          <ul className="hidden items-center gap-8 lg:flex">
-            {["home", "menu", "about", "gallery", "testimonials", "contact"].map((s) => (
-              <li key={s}>
-                <button onClick={() => scrollTo(s)} className="text-sm capitalize text-muted-foreground transition-colors hover:text-primary">
-                  {s}
-                </button>
-              </li>
+      <div className="fixed inset-x-0 top-0 z-50 h-1 bg-transparent">
+        <div
+          className="h-full bg-gradient-to-r from-[color:var(--ember)] to-[color:var(--blood)] transition-[width] duration-100"
+          style={{ width: `${progress}%` }}
+        />
+      </div>
+
+      <header
+        className={`fixed inset-x-0 top-1 z-40 transition-all ${scrolled ? "backdrop-blur-xl bg-background/75 border-b border-white/10 py-2" : "py-4"}`}
+      >
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-5">
+          <a href="#home" onClick={(e) => { e.preventDefault(); scrollTo("home"); }} className="flex items-center gap-2">
+            <span className="grid h-9 w-9 place-items-center rounded-md bg-gradient-to-br from-[color:var(--ember)] to-[color:var(--blood)] text-white shadow-[var(--shadow-red)]">
+              <i className="fa-solid fa-dumbbell" />
+            </span>
+            <span className="font-display text-xl tracking-wider">PowerFit<span className="text-[color:var(--blood)]">.</span></span>
+          </a>
+
+          <nav className="hidden lg:flex items-center gap-7 text-sm font-medium">
+            {NAV.map((n) => (
+              <a key={n} href={`#${n.toLowerCase()}`} onClick={(e) => { e.preventDefault(); scrollTo(n.toLowerCase()); }} className="relative text-foreground/80 hover:text-white transition-colors after:absolute after:left-0 after:-bottom-1 after:h-0.5 after:w-0 after:bg-[color:var(--blood)] hover:after:w-full after:transition-all">
+                {n}
+              </a>
             ))}
-          </ul>
+          </nav>
 
           <div className="flex items-center gap-3">
             <button
+              onClick={() => setDark((v) => !v)}
+              className="grid h-9 w-9 place-items-center rounded-full border border-white/15 text-foreground/80 hover:text-white hover:border-[color:var(--blood)] transition"
               aria-label="Toggle theme"
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="grid h-9 w-9 place-items-center rounded-full border border-border text-muted-foreground hover:text-primary transition-colors"
             >
-              <i className={`fa-solid ${theme === "dark" ? "fa-sun" : "fa-moon"}`} />
+              <i className={`fa-solid ${dark ? "fa-sun" : "fa-moon"} text-sm`} />
             </button>
-            <div className="relative grid h-9 w-9 place-items-center rounded-full border border-border">
-              <i className="fa-solid fa-bag-shopping text-muted-foreground" />
-              {cart > 0 && (
-                <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-accent px-1 text-[10px] font-semibold text-accent-foreground">
-                  {cart}
-                </span>
-              )}
-              {flyKey > 0 && (
-                <span key={flyKey} className="pointer-events-none absolute inset-0 grid place-items-center">
-                  <span className="h-2 w-2 rounded-full bg-primary animate-ping" />
-                </span>
-              )}
-            </div>
-            <button onClick={() => scrollTo("reserve")} className="hidden rounded-full px-5 py-2 text-sm font-medium btn-gold md:inline-flex">
-              Reserve
+            <button
+              onClick={() => scrollTo("pricing")}
+              className="hidden sm:inline-flex btn-red px-4 py-2 rounded-md text-sm font-semibold uppercase tracking-wider"
+            >
+              Join Now
             </button>
-            <button onClick={() => setMobileOpen((v) => !v)} className="grid h-9 w-9 place-items-center rounded-full border border-border lg:hidden" aria-label="Menu">
-              <i className={`fa-solid ${mobileOpen ? "fa-xmark" : "fa-bars"}`} />
+            <button
+              className="lg:hidden grid h-10 w-10 place-items-center rounded-md border border-white/15"
+              onClick={() => setMenuOpen((v) => !v)}
+              aria-label="Menu"
+            >
+              <i className={`fa-solid ${menuOpen ? "fa-xmark" : "fa-bars"}`} />
             </button>
           </div>
-        </nav>
+        </div>
 
-        {mobileOpen && (
-          <div className="border-t border-border bg-background/95 backdrop-blur lg:hidden">
-            <ul className="mx-auto flex max-w-7xl flex-col gap-1 px-5 py-4">
-              {["home", "menu", "about", "gallery", "testimonials", "contact", "reserve"].map((s) => (
-                <li key={s}>
-                  <button onClick={() => scrollTo(s)} className="block w-full rounded-md px-3 py-2 text-left capitalize hover:bg-secondary">
-                    {s}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+        <div className={`lg:hidden overflow-hidden transition-[max-height] duration-300 ${menuOpen ? "max-h-[500px]" : "max-h-0"}`}>
+          <nav className="mx-4 mt-3 flex flex-col rounded-xl border border-white/10 bg-background/95 backdrop-blur p-3">
+            {NAV.map((n) => (
+              <a key={n} href={`#${n.toLowerCase()}`} onClick={(e) => { e.preventDefault(); scrollTo(n.toLowerCase()); }} className="rounded-md px-3 py-2.5 text-sm hover:bg-white/5">
+                {n}
+              </a>
+            ))}
+          </nav>
+        </div>
       </header>
 
-      {/* Hero */}
-      <section id="home" className="relative isolate flex min-h-screen items-center overflow-hidden">
-        <img src={heroFood} alt="" className="absolute inset-0 h-full w-full object-cover" width={1920} height={1280} fetchPriority="high" decoding="async" />
-        <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/70 to-background" />
-        <div className="absolute inset-0 bg-radial-hero" />
+      <main>
+        <section id="home" className="relative min-h-screen overflow-hidden flex items-center">
+          <img src={HERO_BG} alt="Athlete lifting weights" className="absolute inset-0 h-full w-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/85 via-black/70 to-background" />
+          <div className="absolute inset-0 bg-radial-hero" />
 
-        <div className="relative mx-auto grid w-full max-w-7xl gap-10 px-5 pt-32 pb-20 md:px-8 md:pt-40">
-          <div className="max-w-3xl reveal">
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-border bg-card/40 px-4 py-1.5 text-xs uppercase tracking-[0.2em] text-muted-foreground backdrop-blur">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-              Now taking reservations
-            </div>
-            <h1 className="font-display text-5xl leading-[1.05] sm:text-6xl md:text-7xl lg:text-8xl">
-              Fresh Ingredients.
-              <br />
-              <span className="text-gradient-gold">Memorable</span> Experiences.
-            </h1>
-            <p className="mt-6 max-w-xl text-lg text-muted-foreground">
-              A modern dining haven where seasonal produce, wood-fire craftsmanship, and warm hospitality meet — night after night.
-            </p>
-            <div className="mt-8 flex flex-wrap gap-4">
-              <button onClick={() => scrollTo("reserve")} className="inline-flex items-center gap-2 rounded-full px-7 py-3 text-sm font-semibold btn-gold">
-                <i className="fa-solid fa-calendar-check" /> Reserve Table
-              </button>
-              <button onClick={() => scrollTo("menu")} className="inline-flex items-center gap-2 rounded-full px-7 py-3 text-sm font-semibold btn-outline-gold">
-                <i className="fa-solid fa-book-open" /> View Menu
-              </button>
-            </div>
-
-            <div ref={statsRef} className="mt-16 grid max-w-2xl grid-cols-2 gap-6 sm:grid-cols-4">
-              {[
-                { n: guests, s: "+", l: "Happy Guests" },
-                { n: dishesCount, s: "", l: "Signature Dishes" },
-                { n: chefsCount, s: "", l: "Expert Chefs" },
-                { n: awards, s: "", l: "Awards Won" },
-              ].map((s) => (
-                <div key={s.l}>
-                  <div className="font-display text-3xl text-primary">{s.n.toLocaleString()}{s.s}</div>
-                  <div className="text-xs uppercase tracking-widest text-muted-foreground">{s.l}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-muted-foreground animate-float" aria-hidden>
-          <i className="fa-solid fa-angle-down text-xl" />
-        </div>
-      </section>
-
-      {/* About */}
-      <section id="about" className="relative py-24 md:py-32">
-        <div className="mx-auto grid max-w-7xl gap-14 px-5 md:px-8 lg:grid-cols-2 lg:items-center">
-          <div className="reveal">
-            <SectionKicker>Our Story</SectionKicker>
-            <h2 className="mt-3 font-display text-4xl md:text-5xl">A haven for the curious palate.</h2>
-            <p className="mt-5 text-muted-foreground">
-              Born from a love of the neighborhood market, Taste Haven brings together seasonal ingredients, global technique, and a room designed for slow, unhurried evenings. Every plate is a small ceremony.
-            </p>
-            <div className="mt-8 grid grid-cols-2 gap-4">
-              {[
-                { i: "fa-seedling", t: "Fresh Ingredients", d: "Sourced daily from local farms." },
-                { i: "fa-hat-chef", t: "Experienced Chefs", d: "A team with global training." },
-                { i: "fa-fire", t: "Cozy Atmosphere", d: "Warm lighting, intimate seating." },
-                { i: "fa-bolt", t: "Fast Service", d: "Attentive, never rushed." },
-              ].map((f) => (
-                <div key={f.t} className="rounded-xl border border-border bg-card/50 p-5 hover-lift">
-                  <div className="grid h-10 w-10 place-items-center rounded-full bg-primary/15 text-primary">
-                    <i className={`fa-solid ${f.i}`} />
-                  </div>
-                  <h3 className="mt-3 font-display text-lg">{f.t}</h3>
-                  <p className="mt-1 text-sm text-muted-foreground">{f.d}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="relative reveal">
-            <div className="relative aspect-[4/5] overflow-hidden rounded-2xl">
-              <img src={gallery1} alt="Restaurant interior" loading="lazy" width={900} height={900} className="h-full w-full object-cover" />
-            </div>
-            <div className="absolute -bottom-8 -left-6 hidden w-56 rounded-xl card-glass p-5 shadow-card md:block">
-              <div className="text-xs uppercase tracking-widest text-muted-foreground">Since</div>
-              <div className="font-display text-4xl text-gradient-gold">2012</div>
-              <div className="mt-1 text-sm text-muted-foreground">A decade of memorable evenings.</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Menu */}
-      <section id="menu" className="relative py-24 md:py-32">
-        <div className="mx-auto max-w-7xl px-5 md:px-8">
-          <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
+          <div className="relative mx-auto max-w-7xl px-5 pt-32 pb-20 grid lg:grid-cols-2 gap-10 items-center w-full">
             <div className="reveal">
-              <SectionKicker>Featured Menu</SectionKicker>
-              <h2 className="mt-3 font-display text-4xl md:text-5xl">Signatures from the kitchen.</h2>
-            </div>
-            <div className="w-full max-w-sm reveal">
-              <label className="flex items-center gap-3 rounded-full border border-border bg-card/50 px-4 py-2.5">
-                <i className="fa-solid fa-magnifying-glass text-muted-foreground" />
-                <input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value.slice(0, 60))}
-                  placeholder="Search dishes..."
-                  className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-                  aria-label="Search menu"
-                />
-              </label>
-            </div>
-          </div>
-
-          <div className="mt-8 flex flex-wrap gap-2 reveal">
-            {CATEGORIES.map((c) => (
-              <button
-                key={c}
-                onClick={() => setCat(c)}
-                className={`rounded-full border px-4 py-1.5 text-sm transition-all ${
-                  cat === c
-                    ? "border-transparent btn-gold"
-                    : "border-border text-muted-foreground hover:text-primary hover:border-primary/50"
-                }`}
-              >
-                {c}
-              </button>
-            ))}
-          </div>
-
-          <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {filtered.map((d) => (
-              <article key={d.name} className="group reveal overflow-hidden rounded-2xl border border-border bg-card hover-lift">
-                <div className="relative aspect-square overflow-hidden">
-                  <img src={d.image} alt={d.name} loading="lazy" width={800} height={800} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                  <div className="absolute right-3 top-3 rounded-full bg-background/70 px-3 py-1 text-xs backdrop-blur">
-                    <i className="fa-solid fa-star text-primary" /> {d.rating}
-                  </div>
-                </div>
-                <div className="p-5">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-display text-lg">{d.name}</h3>
-                    <span className="font-display text-primary">${d.price}</span>
-                  </div>
-                  <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{d.desc}</p>
-                  <button
-                    onClick={() => addToCart(d.name)}
-                    className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full border border-border py-2 text-sm font-medium text-foreground transition-all hover:btn-gold hover:border-transparent"
-                  >
-                    <i className="fa-solid fa-plus" /> Order Now
-                  </button>
-                </div>
-              </article>
-            ))}
-            {filtered.length === 0 && (
-              <div className="col-span-full rounded-2xl border border-dashed border-border p-12 text-center text-muted-foreground">
-                No dishes match your search.
+              <span className="inline-flex items-center gap-2 rounded-full border border-[color:var(--blood)]/40 bg-[color:var(--blood)]/10 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-[color:var(--ember)]">
+                <span className="h-2 w-2 rounded-full bg-[color:var(--blood)] pulse-red" /> Now open 24/7
+              </span>
+              <h1 className="mt-5 font-display text-5xl sm:text-6xl lg:text-7xl leading-[0.95]">
+                Unleash <span className="text-gradient-red">Your Power</span><br />
+                Every Single Day.
+              </h1>
+              <p className="mt-5 max-w-lg text-lg text-foreground/80">
+                Stronger Every Day. Healthier for Life. Train with elite coaches, world-class equipment, and a community that pushes you further.
+              </p>
+              <div className="mt-8 flex flex-wrap gap-3">
+                <button onClick={() => scrollTo("pricing")} className="btn-red rounded-md px-6 py-3 text-sm font-bold uppercase tracking-wider">
+                  <i className="fa-solid fa-bolt mr-2" /> Join Now
+                </button>
+                <button onClick={() => scrollTo("contact")} className="btn-outline-red rounded-md px-6 py-3 text-sm font-bold uppercase tracking-wider">
+                  <i className="fa-regular fa-calendar mr-2" /> Book Free Trial
+                </button>
               </div>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* Offers */}
-      <section className="relative py-24 md:py-32">
-        <div className="mx-auto max-w-7xl px-5 md:px-8">
-          <div className="reveal">
-            <SectionKicker>This Season</SectionKicker>
-            <h2 className="mt-3 font-display text-4xl md:text-5xl">Special offers, made for sharing.</h2>
-          </div>
-          <div className="mt-10 grid gap-6 md:grid-cols-3">
-            {OFFERS.map((o) => (
-              <div key={o.title} className="reveal relative overflow-hidden rounded-2xl border border-primary/25 p-8 hover-lift" style={{ background: "linear-gradient(160deg, color-mix(in oklab, var(--gold) 10%, var(--card)), var(--card))" }}>
-                <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-primary/15 blur-2xl" />
-                <div className="relative flex items-center justify-between">
-                  <div className="grid h-12 w-12 place-items-center rounded-full bg-primary/20 text-primary">
-                    <i className={`fa-solid ${o.icon}`} />
-                  </div>
-                  <span className="rounded-full border border-primary/40 px-3 py-1 text-[10px] uppercase tracking-widest text-primary">{o.tag}</span>
-                </div>
-                <h3 className="relative mt-6 font-display text-2xl">{o.title}</h3>
-                <p className="relative mt-2 text-sm text-muted-foreground">{o.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Gallery */}
-      <section id="gallery" className="relative py-24 md:py-32">
-        <div className="mx-auto max-w-7xl px-5 md:px-8">
-          <div className="reveal">
-            <SectionKicker>Gallery</SectionKicker>
-            <h2 className="mt-3 font-display text-4xl md:text-5xl">A glimpse inside the haven.</h2>
-          </div>
-          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {GALLERY.map((src, i) => (
-              <button
-                key={i}
-                onClick={() => setLightbox(src)}
-                className={`reveal group relative overflow-hidden rounded-2xl ${i === 0 ? "lg:row-span-2 lg:col-span-2 aspect-square lg:aspect-auto" : "aspect-square"}`}
-              >
-                <img src={src} alt={`Gallery ${i + 1}`} loading="lazy" width={900} height={900} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                <div className="absolute inset-0 bg-background/0 transition-colors group-hover:bg-background/40" />
-                <div className="absolute inset-0 grid place-items-center opacity-0 transition-opacity group-hover:opacity-100">
-                  <span className="grid h-12 w-12 place-items-center rounded-full bg-primary text-primary-foreground">
-                    <i className="fa-solid fa-expand" />
-                  </span>
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {lightbox && (
-          <div
-            role="dialog"
-            aria-modal="true"
-            className="fixed inset-0 z-[80] grid place-items-center bg-background/90 p-4 backdrop-blur"
-            onClick={() => setLightbox(null)}
-          >
-            <button aria-label="Close" className="absolute right-6 top-6 grid h-11 w-11 place-items-center rounded-full border border-border text-foreground">
-              <i className="fa-solid fa-xmark" />
-            </button>
-            <img src={lightbox} alt="Preview" className="max-h-[85vh] max-w-[95vw] rounded-2xl object-contain" />
-          </div>
-        )}
-      </section>
-
-      {/* Chefs */}
-      <section className="relative py-24 md:py-32">
-        <div className="mx-auto max-w-7xl px-5 md:px-8">
-          <div className="reveal">
-            <SectionKicker>Meet the Team</SectionKicker>
-            <h2 className="mt-3 font-display text-4xl md:text-5xl">The craft behind every plate.</h2>
-          </div>
-          <div className="mt-10 grid gap-8 md:grid-cols-3">
-            {CHEFS.map((c) => (
-              <div key={c.name} className="reveal group">
-                <div className="relative aspect-[4/5] overflow-hidden rounded-2xl">
-                  <img src={c.image} alt={c.name} loading="lazy" width={800} height={1000} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
-                  <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-background to-transparent" />
-                  <div className="absolute inset-x-0 bottom-0 p-5">
-                    <div className="text-xs uppercase tracking-widest text-primary">{c.role}</div>
-                    <h3 className="font-display text-2xl">{c.name}</h3>
-                    <p className="mt-1 text-sm text-muted-foreground">{c.bio}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials */}
-      <section id="testimonials" className="relative overflow-hidden py-24 md:py-32">
-        <div className="mx-auto max-w-4xl px-5 text-center md:px-8">
-          <SectionKicker>Guests Say</SectionKicker>
-          <h2 className="mt-3 font-display text-4xl md:text-5xl">Loved by the city.</h2>
-
-          <div className="relative mt-12 min-h-[240px]">
-            {TESTIMONIALS.map((t, i) => (
-              <blockquote
-                key={t.name}
-                className={`absolute inset-0 flex flex-col items-center justify-center transition-all duration-700 ${i === tIndex ? "opacity-100" : "pointer-events-none opacity-0 translate-y-4"}`}
-              >
-                <div className="flex gap-1 text-primary">
-                  {Array.from({ length: 5 }).map((_, k) => (
-                    <i key={k} className={`fa-solid fa-star ${k < t.rating ? "" : "opacity-25"}`} />
+              <div className="mt-10 flex items-center gap-6 text-sm text-foreground/70">
+                <div className="flex -space-x-3">
+                  {REVIEWS.slice(0, 4).map((r) => (
+                    <img key={r.name} src={r.img} alt="" className="h-9 w-9 rounded-full border-2 border-background object-cover" />
                   ))}
                 </div>
-                <p className="mt-6 font-display text-2xl leading-relaxed md:text-3xl">"{t.text}"</p>
-                <div className="mt-6 flex items-center gap-3">
-                  <div className="grid h-11 w-11 place-items-center rounded-full bg-primary/20 font-display text-primary">
-                    {t.name.split(" ").map((s) => s[0]).join("").slice(0, 2)}
-                  </div>
-                  <div className="text-left">
-                    <div className="font-medium">{t.name}</div>
-                    <div className="text-xs text-muted-foreground">{t.role}</div>
-                  </div>
+                <div>
+                  <div className="text-yellow-400"><i className="fa-solid fa-star" /><i className="fa-solid fa-star" /><i className="fa-solid fa-star" /><i className="fa-solid fa-star" /><i className="fa-solid fa-star" /></div>
+                  <div className="text-xs">Trusted by <b className="text-white">5,000+</b> members</div>
                 </div>
-              </blockquote>
-            ))}
-          </div>
-
-          <div className="mt-8 flex justify-center gap-2">
-            {TESTIMONIALS.map((_, i) => (
-              <button
-                key={i}
-                aria-label={`Testimonial ${i + 1}`}
-                onClick={() => setTIndex(i)}
-                className={`h-1.5 rounded-full transition-all ${i === tIndex ? "w-8 bg-primary" : "w-2 bg-border"}`}
-              />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Reservation */}
-      <section id="reserve" className="relative py-24 md:py-32">
-        <div className="mx-auto grid max-w-7xl gap-14 px-5 md:px-8 lg:grid-cols-2">
-          <div className="reveal">
-            <SectionKicker>Reservation</SectionKicker>
-            <h2 className="mt-3 font-display text-4xl md:text-5xl">Book your table.</h2>
-            <p className="mt-4 text-muted-foreground">Reservations open daily from 5 PM. For groups of 8+, please call us directly.</p>
-
-            <div className="mt-8 space-y-4">
-              {[
-                { i: "fa-clock", t: "Opening Hours", d: "Mon–Sun, 5 PM – 12 AM" },
-                { i: "fa-phone", t: "Direct Line", d: "+1 (415) 555 0138" },
-                { i: "fa-location-dot", t: "Location", d: "42 Amber Street, Downtown District" },
-              ].map((r) => (
-                <div key={r.t} className="flex items-start gap-4 rounded-xl border border-border bg-card/40 p-4">
-                  <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary/15 text-primary">
-                    <i className={`fa-solid ${r.i}`} />
-                  </div>
-                  <div>
-                    <div className="font-medium">{r.t}</div>
-                    <div className="text-sm text-muted-foreground">{r.d}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <form onSubmit={onReserve} className="reveal rounded-2xl border border-border bg-card p-6 md:p-8">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Full Name" name="name" placeholder="Jane Doe" required maxLength={80} />
-              <Field label="Email" name="email" type="email" placeholder="you@example.com" required maxLength={120} />
-              <Field label="Phone" name="phone" type="tel" placeholder="+1 415 555 0138" required maxLength={20} />
-              <Field label="Guests" name="guests" type="number" placeholder="2" required min={1} max={30} defaultValue={2} />
-              <Field label="Date" name="date" type="date" required />
-              <Field label="Time" name="time" type="time" required />
-              <div className="sm:col-span-2">
-                <label className="mb-1.5 block text-xs uppercase tracking-widest text-muted-foreground">Message</label>
-                <textarea name="message" maxLength={500} rows={3} placeholder="Any special request..." className="w-full resize-none rounded-lg border border-border bg-background/50 px-4 py-3 text-sm outline-none focus:border-primary" />
               </div>
             </div>
-            <button type="submit" className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold btn-gold">
-              <i className="fa-solid fa-calendar-check" /> Reserve Table
-            </button>
-          </form>
-        </div>
-      </section>
 
-      {/* FAQ */}
-      <section className="relative py-24 md:py-32">
-        <div className="mx-auto max-w-3xl px-5 md:px-8">
-          <div className="reveal text-center">
-            <SectionKicker>FAQ</SectionKicker>
-            <h2 className="mt-3 font-display text-4xl md:text-5xl">Things guests ask.</h2>
+            <div className="reveal card-glass rounded-2xl p-6 lg:justify-self-end lg:max-w-sm">
+              <div className="flex items-center gap-2 text-[color:var(--ember)] text-xs font-bold uppercase tracking-widest">
+                <i className="fa-solid fa-tag" /> Limited Offer
+              </div>
+              <h3 className="mt-2 font-display text-2xl">50% Off First Month</h3>
+              <p className="mt-1 text-sm text-foreground/70">Sign up before the timer runs out.</p>
+              <div className="mt-5 grid grid-cols-4 gap-2 text-center">
+                {[["D", cd.d], ["H", cd.h], ["M", cd.m], ["S", cd.s]].map(([l, v]) => (
+                  <div key={l as string} className="rounded-lg bg-black/50 border border-white/10 py-3">
+                    <div className="font-display text-2xl text-white">{String(v).padStart(2, "0")}</div>
+                    <div className="text-[10px] uppercase tracking-widest text-foreground/60">{l}</div>
+                  </div>
+                ))}
+              </div>
+              <button onClick={() => scrollTo("pricing")} className="mt-5 w-full btn-red rounded-md py-2.5 text-sm font-bold uppercase tracking-wider">Claim Offer</button>
+            </div>
           </div>
-          <div className="mt-10 divide-y divide-border rounded-2xl border border-border bg-card/40">
-            {FAQS.map((f, i) => {
-              const open = openFaq === i;
-              return (
-                <div key={f.q} className="reveal">
+
+          <a href="#about" onClick={(e) => { e.preventDefault(); scrollTo("about"); }} className="absolute bottom-6 left-1/2 -translate-x-1/2 animate-float text-foreground/60">
+            <i className="fa-solid fa-chevron-down text-2xl" />
+          </a>
+        </section>
+
+        <section id="about" className="py-24">
+          <div className="mx-auto max-w-7xl px-5 grid lg:grid-cols-2 gap-12 items-center">
+            <div className="reveal relative">
+              <img src={ABOUT_IMG} alt="Inside PowerFit Gym" loading="lazy" className="rounded-2xl w-full object-cover aspect-[4/5] shadow-[var(--shadow-card)]" />
+              <div className="absolute -bottom-6 -right-4 card-glass rounded-xl p-4 hidden sm:block">
+                <div className="font-display text-3xl text-[color:var(--ember)]">15+</div>
+                <div className="text-xs uppercase tracking-widest text-foreground/70">Years of Grit</div>
+              </div>
+            </div>
+            <div className="reveal">
+              <span className="text-xs font-bold uppercase tracking-widest text-[color:var(--ember)]">About Us</span>
+              <h2 className="mt-2 font-display text-4xl sm:text-5xl">Built for those who refuse to quit.</h2>
+              <p className="mt-4 text-foreground/75">PowerFit Gym is more than a facility — it's a movement. We blend cutting-edge equipment, elite coaching, and a relentless community to help you break every ceiling you set.</p>
+              <div className="mt-6 grid sm:grid-cols-2 gap-4">
+                <div className="rounded-lg border border-white/10 bg-white/5 p-4">
+                  <div className="text-[color:var(--blood)] mb-1"><i className="fa-solid fa-bullseye" /></div>
+                  <h4 className="font-display text-base">Our Mission</h4>
+                  <p className="text-sm text-foreground/70 mt-1">Empower every member to become stronger — physically and mentally.</p>
+                </div>
+                <div className="rounded-lg border border-white/10 bg-white/5 p-4">
+                  <div className="text-[color:var(--blood)] mb-1"><i className="fa-solid fa-eye" /></div>
+                  <h4 className="font-display text-base">Our Vision</h4>
+                  <p className="text-sm text-foreground/70 mt-1">A world where strength and health are lifestyles, not milestones.</p>
+                </div>
+              </div>
+
+              <div ref={statsRef} className="mt-10 grid grid-cols-2 sm:grid-cols-4 gap-4">
+                {[
+                  { label: "Members", val: members, suffix: "+" },
+                  { label: "Trainers", val: trainersCount, suffix: "+" },
+                  { label: "Years", val: years, suffix: "+" },
+                  { label: "Access", val: access, suffix: "/7" },
+                ].map((s) => (
+                  <div key={s.label} className="text-center rounded-lg border border-white/10 bg-black/30 py-4">
+                    <div className="font-display text-3xl text-white">{s.val.toLocaleString()}{s.suffix}</div>
+                    <div className="text-xs uppercase tracking-widest text-foreground/60 mt-1">{s.label}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="programs" className="py-24 border-t border-white/5">
+          <div className="mx-auto max-w-7xl px-5">
+            <div className="reveal text-center max-w-2xl mx-auto">
+              <span className="text-xs font-bold uppercase tracking-widest text-[color:var(--ember)]">Fitness Programs</span>
+              <h2 className="mt-2 font-display text-4xl sm:text-5xl">Train the way you want.</h2>
+              <div className="divider-red mt-6 w-32 mx-auto" />
+            </div>
+
+            <div className="mt-8 flex flex-col sm:flex-row items-center gap-4 justify-between">
+              <div className="flex flex-wrap gap-2">
+                {PROGRAM_CATS.map((c) => (
                   <button
-                    onClick={() => setOpenFaq(open ? null : i)}
-                    className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left"
-                    aria-expanded={open}
+                    key={c}
+                    onClick={() => setProgCat(c)}
+                    className={`rounded-full px-4 py-1.5 text-xs font-semibold uppercase tracking-wider border transition ${progCat === c ? "bg-[color:var(--blood)] border-[color:var(--blood)] text-white" : "border-white/15 text-foreground/70 hover:border-[color:var(--blood)]"}`}
                   >
-                    <span className="font-display text-lg">{f.q}</span>
-                    <i className={`fa-solid fa-plus text-primary transition-transform ${open ? "rotate-45" : ""}`} />
+                    {c}
                   </button>
-                  <div className={`grid overflow-hidden transition-[grid-template-rows] duration-300 ${open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
-                    <div className="min-h-0 overflow-hidden px-6 pb-5 text-sm text-muted-foreground">{f.a}</div>
+                ))}
+              </div>
+              <div className="relative w-full sm:w-64">
+                <i className="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-foreground/50 text-sm" />
+                <input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search programs..."
+                  aria-label="Search programs"
+                  className="w-full rounded-full border border-white/15 bg-white/5 pl-9 pr-4 py-2 text-sm outline-none focus:border-[color:var(--blood)]"
+                />
+              </div>
+            </div>
+
+            <div className="mt-10 grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+              {filteredPrograms.map((p) => (
+                <article key={p.name} className="reveal group card-glass rounded-xl overflow-hidden hover-lift">
+                  <div className="relative aspect-[4/3] overflow-hidden">
+                    <img src={p.img} alt={p.name} loading="lazy" className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+                    <span className="absolute top-3 left-3 grid h-10 w-10 place-items-center rounded-md bg-[color:var(--blood)] text-white shadow-[var(--shadow-red)]">
+                      <i className={`fa-solid ${p.icon}`} />
+                    </span>
+                  </div>
+                  <div className="p-5">
+                    <h3 className="font-display text-lg">{p.name}</h3>
+                    <p className="mt-1 text-sm text-foreground/70 line-clamp-2">{p.desc}</p>
+                    <div className="mt-3 flex items-center justify-between text-xs text-foreground/60">
+                      <span><i className="fa-regular fa-clock mr-1" />{p.duration}</span>
+                      <span className="rounded-full bg-white/5 px-2 py-0.5">{p.level}</span>
+                    </div>
+                    <button className="mt-4 text-xs font-bold uppercase tracking-widest text-[color:var(--ember)] hover:text-white transition">
+                      Learn More <i className="fa-solid fa-arrow-right ml-1" />
+                    </button>
+                  </div>
+                </article>
+              ))}
+              {filteredPrograms.length === 0 && (
+                <p className="col-span-full text-center text-foreground/60 py-10">No programs match your search.</p>
+              )}
+            </div>
+          </div>
+        </section>
+
+        <section id="trainers" className="py-24 border-t border-white/5">
+          <div className="mx-auto max-w-7xl px-5">
+            <div className="reveal text-center max-w-2xl mx-auto">
+              <span className="text-xs font-bold uppercase tracking-widest text-[color:var(--ember)]">Meet Our Trainers</span>
+              <h2 className="mt-2 font-display text-4xl sm:text-5xl">Coaches who care.</h2>
+              <div className="divider-red mt-6 w-32 mx-auto" />
+            </div>
+            <div className="mt-12 grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+              {TRAINERS.map((t) => (
+                <div key={t.name} className="reveal group relative rounded-xl overflow-hidden hover-lift">
+                  <img src={t.img} alt={t.name} loading="lazy" className="w-full aspect-[3/4] object-cover transition-transform duration-700 group-hover:scale-105" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
+                  <div className="absolute bottom-0 p-5 text-white w-full">
+                    <h3 className="font-display text-xl">{t.name}</h3>
+                    <p className="text-sm text-[color:var(--ember)]">{t.role}</p>
+                    <p className="mt-1 text-xs text-white/70">{t.years} yrs · {t.certs}</p>
+                    <div className="mt-3 flex gap-3 opacity-80 group-hover:opacity-100 transition">
+                      {["instagram", "twitter", "facebook", "youtube"].map((s) => (
+                        <a key={s} href="#" aria-label={s} className="hover:text-[color:var(--ember)]">
+                          <i className={`fa-brands fa-${s}`} />
+                        </a>
+                      ))}
+                    </div>
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* Contact */}
-      <section id="contact" className="relative py-24 md:py-32">
-        <div className="mx-auto grid max-w-7xl gap-10 px-5 md:px-8 lg:grid-cols-2">
-          <div className="reveal">
-            <SectionKicker>Contact</SectionKicker>
-            <h2 className="mt-3 font-display text-4xl md:text-5xl">Come find us.</h2>
-            <p className="mt-4 text-muted-foreground">Two blocks from the riverfront, tucked behind the old amber lamp post.</p>
-
-            <div className="mt-8 space-y-3">
-              <ContactRow icon="fa-location-dot" title="42 Amber Street, Downtown District, CA 94103" />
-              <ContactRow icon="fa-phone" title="+1 (415) 555 0138" />
-              <ContactRow icon="fa-envelope" title="hello@tastehaven.co" />
-            </div>
-
-            <div className="mt-8 flex gap-3">
-              {["instagram", "facebook", "x-twitter", "tiktok"].map((s) => (
-                <a key={s} href="#" aria-label={s} className="grid h-10 w-10 place-items-center rounded-full border border-border text-muted-foreground transition-colors hover:text-primary hover:border-primary/60">
-                  <i className={`fa-brands fa-${s}`} />
-                </a>
               ))}
             </div>
           </div>
-          <div className="reveal overflow-hidden rounded-2xl border border-border">
-            <iframe
-              title="Taste Haven location"
-              src="https://www.google.com/maps?q=San+Francisco+downtown&output=embed"
-              className="h-[420px] w-full grayscale-[30%]"
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-            />
-          </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Footer */}
-      <footer className="border-t border-border bg-card/40 py-14">
-        <div className="mx-auto grid max-w-7xl gap-10 px-5 md:grid-cols-4 md:px-8">
-          <div>
-            <div className="flex items-center gap-2">
-              <i className="fa-solid fa-utensils text-primary" />
-              <span className="font-display text-xl">Taste <span className="text-gradient-gold">Haven</span></span>
+        <section id="pricing" className="py-24 border-t border-white/5 bg-radial-hero">
+          <div className="mx-auto max-w-7xl px-5">
+            <div className="reveal text-center max-w-2xl mx-auto">
+              <span className="text-xs font-bold uppercase tracking-widest text-[color:var(--ember)]">Membership</span>
+              <h2 className="mt-2 font-display text-4xl sm:text-5xl">Choose your plan.</h2>
+              <div className="divider-red mt-6 w-32 mx-auto" />
             </div>
-            <p className="mt-4 text-sm text-muted-foreground">Fresh ingredients, memorable experiences — since 2012.</p>
-          </div>
-          <div>
-            <h4 className="font-display text-lg">Quick Links</h4>
-            <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
-              {["Menu", "About", "Gallery", "Reserve", "Contact"].map((l) => (
-                <li key={l}><button onClick={() => scrollTo(l.toLowerCase())} className="hover:text-primary">{l}</button></li>
+            <div className="mt-12 grid md:grid-cols-3 gap-6">
+              {PLANS.map((p) => (
+                <div key={p.name} className={`reveal relative rounded-2xl p-7 border transition ${p.featured ? "bg-gradient-to-b from-[color:var(--blood)]/25 to-black/40 border-[color:var(--blood)] shadow-[var(--shadow-red)] md:scale-105" : "card-glass"}`}>
+                  {p.featured && (
+                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-[color:var(--blood)] px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-white">Recommended</span>
+                  )}
+                  <h3 className="font-display text-2xl">{p.name}</h3>
+                  <div className="mt-3 flex items-baseline gap-1">
+                    <span className="font-display text-5xl text-white">${p.price}</span>
+                    <span className="text-sm text-foreground/60">/month</span>
+                  </div>
+                  <ul className="mt-6 space-y-3 text-sm">
+                    {p.features.map((f) => (
+                      <li key={f} className="flex gap-2">
+                        <i className="fa-solid fa-check text-[color:var(--ember)] mt-1" />
+                        <span className="text-foreground/85">{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <button className={`mt-7 w-full rounded-md py-3 text-sm font-bold uppercase tracking-wider ${p.featured ? "btn-red" : "btn-outline-red"}`}>Join Now</button>
+                </div>
               ))}
-            </ul>
+            </div>
           </div>
-          <div>
-            <h4 className="font-display text-lg">Opening Hours</h4>
-            <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
-              <li>Mon–Thu · 5 PM – 11 PM</li>
-              <li>Fri–Sat · 5 PM – 1 AM</li>
-              <li>Sunday · 4 PM – 11 PM</li>
-            </ul>
-          </div>
-          <div>
-            <h4 className="font-display text-lg">Newsletter</h4>
-            <p className="mt-4 text-sm text-muted-foreground">Seasonal menus and private events, once a month.</p>
-            <form onSubmit={(e) => { e.preventDefault(); toast.success("Subscribed! Welcome to Taste Haven."); (e.currentTarget as HTMLFormElement).reset(); }} className="mt-4 flex overflow-hidden rounded-full border border-border bg-background/60">
-              <input required type="email" maxLength={120} placeholder="you@email.com" className="flex-1 bg-transparent px-4 py-2.5 text-sm outline-none" aria-label="Email" />
-              <button className="px-4 btn-gold text-sm font-semibold" type="submit">Join</button>
-            </form>
-          </div>
-        </div>
-        <div className="mx-auto mt-10 max-w-7xl px-5 md:px-8">
-          <div className="divider-gold" />
-          <div className="mt-6 flex flex-col items-center justify-between gap-3 text-xs text-muted-foreground md:flex-row">
-            <div>© {new Date().getFullYear()} Taste Haven. All rights reserved.</div>
-            <div>Crafted with care in the Downtown District.</div>
-          </div>
-        </div>
-      </footer>
+        </section>
 
-      {/* Scroll to top */}
+        <section className="py-24 border-t border-white/5">
+          <div className="mx-auto max-w-7xl px-5 grid lg:grid-cols-2 gap-10">
+            <BMICard />
+            <ScheduleCard day={day} setDay={setDay} />
+          </div>
+        </section>
+
+        <section id="gallery" className="py-24 border-t border-white/5">
+          <div className="mx-auto max-w-7xl px-5">
+            <div className="reveal text-center max-w-2xl mx-auto">
+              <span className="text-xs font-bold uppercase tracking-widest text-[color:var(--ember)]">Gallery</span>
+              <h2 className="mt-2 font-display text-4xl sm:text-5xl">Inside the grind.</h2>
+              <div className="divider-red mt-6 w-32 mx-auto" />
+            </div>
+            <div className="mt-10 columns-2 md:columns-3 gap-4 [column-fill:_balance]">
+              {GALLERY.map((src, i) => (
+                <button
+                  key={src}
+                  onClick={() => setLightbox(src)}
+                  className="mb-4 block w-full overflow-hidden rounded-xl relative group"
+                  style={{ breakInside: "avoid" }}
+                  aria-label={`View gallery image ${i + 1}`}
+                >
+                  <img src={src} alt={`Gym ${i + 1}`} loading="lazy" className="w-full transition-transform duration-700 group-hover:scale-110" />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition flex items-center justify-center">
+                    <i className="fa-solid fa-magnifying-glass-plus text-white text-2xl opacity-0 group-hover:opacity-100 transition" />
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {lightbox && (
+            <div
+              className="fixed inset-0 z-[80] bg-black/90 backdrop-blur flex items-center justify-center p-4"
+              onClick={() => setLightbox(null)}
+              role="dialog"
+              aria-modal="true"
+            >
+              <button className="absolute top-5 right-5 h-11 w-11 rounded-full bg-white/10 text-white text-xl" aria-label="Close">
+                <i className="fa-solid fa-xmark" />
+              </button>
+              <img src={lightbox} alt="" className="max-h-[90vh] max-w-full rounded-lg" />
+            </div>
+          )}
+        </section>
+
+        <section id="testimonials" className="py-24 border-t border-white/5 bg-radial-hero">
+          <div className="mx-auto max-w-4xl px-5">
+            <div className="reveal text-center">
+              <span className="text-xs font-bold uppercase tracking-widest text-[color:var(--ember)]">Testimonials</span>
+              <h2 className="mt-2 font-display text-4xl sm:text-5xl">What members say.</h2>
+              <div className="divider-red mt-6 w-32 mx-auto" />
+            </div>
+            <div className="mt-12 relative">
+              <div className="overflow-hidden rounded-2xl card-glass p-8 md:p-12 text-center">
+                {REVIEWS.map((r, i) => (
+                  <div key={r.name} className={`transition-opacity duration-500 ${i === reviewIdx ? "opacity-100" : "hidden opacity-0"}`}>
+                    <img src={r.img} alt={r.name} className="mx-auto h-20 w-20 rounded-full object-cover ring-2 ring-[color:var(--blood)]" />
+                    <div className="mt-4 text-yellow-400">
+                      {Array.from({ length: 5 }).map((_, k) => (
+                        <i key={k} className={`fa-solid fa-star ${k < r.rating ? "" : "opacity-30"}`} />
+                      ))}
+                    </div>
+                    <p className="mt-4 text-lg text-foreground/85 italic">"{r.text}"</p>
+                    <p className="mt-4 font-display text-lg">{r.name}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-5 flex justify-center gap-2">
+                {REVIEWS.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setReviewIdx(i)}
+                    aria-label={`Review ${i + 1}`}
+                    className={`h-2 rounded-full transition-all ${i === reviewIdx ? "w-8 bg-[color:var(--blood)]" : "w-2 bg-white/25"}`}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="faq" className="py-24 border-t border-white/5">
+          <div className="mx-auto max-w-3xl px-5">
+            <div className="reveal text-center">
+              <span className="text-xs font-bold uppercase tracking-widest text-[color:var(--ember)]">FAQ</span>
+              <h2 className="mt-2 font-display text-4xl sm:text-5xl">Got questions?</h2>
+              <div className="divider-red mt-6 w-32 mx-auto" />
+            </div>
+            <div className="mt-10 space-y-3">
+              {FAQS.map((f, i) => {
+                const open = openFaq === i;
+                return (
+                  <div key={f.q} className="rounded-xl border border-white/10 bg-white/5 overflow-hidden">
+                    <button
+                      onClick={() => setOpenFaq(open ? null : i)}
+                      className="w-full flex justify-between items-center gap-4 px-5 py-4 text-left"
+                      aria-expanded={open}
+                    >
+                      <span className="font-medium">{f.q}</span>
+                      <i className={`fa-solid fa-chevron-down text-[color:var(--ember)] transition-transform ${open ? "rotate-180" : ""}`} />
+                    </button>
+                    <div className={`grid transition-[grid-template-rows] duration-300 ${open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
+                      <div className="overflow-hidden">
+                        <p className="px-5 pb-5 text-sm text-foreground/75">{f.a}</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
+        <ContactSection />
+      </main>
+
+      <Footer scrollTo={scrollTo} />
+
       <button
-        aria-label="Back to top"
         onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-        className={`fixed bottom-6 right-6 z-40 grid h-11 w-11 place-items-center rounded-full btn-gold transition-all ${showTop ? "opacity-100 translate-y-0" : "pointer-events-none opacity-0 translate-y-3"}`}
+        className={`fixed bottom-6 right-6 z-40 grid h-12 w-12 place-items-center rounded-full btn-red transition-all ${showTop ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"}`}
+        aria-label="Scroll to top"
       >
         <i className="fa-solid fa-arrow-up" />
       </button>
+
+      <Toaster theme="dark" position="top-center" richColors />
+    </>
+  );
+}
+
+/* --------------------------- Sub-components --------------------------- */
+
+function BMICard() {
+  const [h, setH] = useState("");
+  const [w, setW] = useState("");
+  const [result, setResult] = useState<{ bmi: number; cat: string; tip: string } | null>(null);
+
+  const calc = (e: FormEvent) => {
+    e.preventDefault();
+    const hn = parseFloat(h), wn = parseFloat(w);
+    if (!hn || !wn || hn <= 0 || wn <= 0) {
+      toast.error("Enter valid height and weight");
+      return;
+    }
+    const bmi = wn / Math.pow(hn / 100, 2);
+    let cat = "Normal weight", tip = "Great! Maintain with balanced training and nutrition.";
+    if (bmi < 18.5) { cat = "Underweight"; tip = "Focus on strength training and calorie-dense whole foods."; }
+    else if (bmi >= 25 && bmi < 30) { cat = "Overweight"; tip = "Combine cardio with strength and mind your calorie intake."; }
+    else if (bmi >= 30) { cat = "Obese"; tip = "Start slow with walking + guided coaching. We can help."; }
+    setResult({ bmi: Math.round(bmi * 10) / 10, cat, tip });
+  };
+
+  return (
+    <div className="reveal card-glass rounded-2xl p-7">
+      <span className="text-xs font-bold uppercase tracking-widest text-[color:var(--ember)]">BMI Calculator</span>
+      <h3 className="mt-2 font-display text-3xl">Know your number.</h3>
+      <form onSubmit={calc} className="mt-6 grid sm:grid-cols-2 gap-4">
+        <label className="block">
+          <span className="text-xs uppercase tracking-widest text-foreground/60">Height (cm)</span>
+          <input value={h} onChange={(e) => setH(e.target.value)} type="number" min="1" className="mt-1 w-full rounded-md border border-white/15 bg-black/40 px-3 py-2.5 outline-none focus:border-[color:var(--blood)]" />
+        </label>
+        <label className="block">
+          <span className="text-xs uppercase tracking-widest text-foreground/60">Weight (kg)</span>
+          <input value={w} onChange={(e) => setW(e.target.value)} type="number" min="1" className="mt-1 w-full rounded-md border border-white/15 bg-black/40 px-3 py-2.5 outline-none focus:border-[color:var(--blood)]" />
+        </label>
+        <button className="sm:col-span-2 btn-red rounded-md py-3 text-sm font-bold uppercase tracking-wider">Calculate</button>
+      </form>
+      {result && (
+        <div className="mt-5 rounded-xl border border-[color:var(--blood)]/30 bg-black/40 p-5">
+          <div className="flex items-baseline gap-3">
+            <span className="font-display text-4xl text-white">{result.bmi}</span>
+            <span className="text-sm text-[color:var(--ember)] uppercase tracking-widest">{result.cat}</span>
+          </div>
+          <p className="mt-2 text-sm text-foreground/75">{result.tip}</p>
+        </div>
+      )}
     </div>
   );
 }
 
-/* ------------------------------ Sub UI -------------------------------- */
-
-function SectionKicker({ children }: { children: React.ReactNode }) {
+function ScheduleCard({ day, setDay }: { day: string; setDay: (d: string) => void }) {
   return (
-    <div className="inline-flex items-center gap-3 text-xs uppercase tracking-[0.3em] text-primary">
-      <span className="h-px w-8 bg-primary" />
-      {children}
+    <div className="reveal card-glass rounded-2xl p-7">
+      <span className="text-xs font-bold uppercase tracking-widest text-[color:var(--ember)]">Workout Schedule</span>
+      <h3 className="mt-2 font-display text-3xl">Weekly timetable.</h3>
+      <div className="mt-5 flex flex-wrap gap-2">
+        {DAYS.map((d) => (
+          <button
+            key={d}
+            onClick={() => setDay(d)}
+            className={`rounded-full px-4 py-1.5 text-xs font-semibold uppercase tracking-wider transition ${day === d ? "bg-[color:var(--blood)] text-white" : "border border-white/15 text-foreground/70 hover:border-[color:var(--blood)]"}`}
+          >
+            {d}
+          </button>
+        ))}
+      </div>
+      <div className="mt-5 overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead className="text-left text-xs uppercase tracking-widest text-foreground/60 border-b border-white/10">
+            <tr>
+              <th className="py-2 pr-3">Time</th>
+              <th className="py-2 pr-3">Workout</th>
+              <th className="py-2 pr-3">Trainer</th>
+              <th className="py-2">Room</th>
+            </tr>
+          </thead>
+          <tbody>
+            {SCHEDULE[day].map((s) => (
+              <tr key={s.time} className="border-b border-white/5">
+                <td className="py-3 pr-3 font-display text-[color:var(--ember)]">{s.time}</td>
+                <td className="py-3 pr-3 text-white">{s.workout}</td>
+                <td className="py-3 pr-3 text-foreground/75">{s.trainer}</td>
+                <td className="py-3 text-foreground/75">{s.room}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
 
-function Field(props: {
-  label: string;
-  name: string;
-  type?: string;
-  placeholder?: string;
-  required?: boolean;
-  maxLength?: number;
-  min?: number;
-  max?: number;
-  defaultValue?: string | number;
-}) {
-  const { label, ...rest } = props;
+function ContactSection() {
+  const [form, setForm] = useState({ name: "", email: "", message: "" });
+
+  const submit = (e: FormEvent) => {
+    e.preventDefault();
+    if (!form.name.trim() || !form.email.trim() || !form.message.trim()) {
+      toast.error("Please fill out all fields");
+      return;
+    }
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(form.email)) {
+      toast.error("Enter a valid email");
+      return;
+    }
+    toast.success("Message sent! We'll get back to you soon.");
+    setForm({ name: "", email: "", message: "" });
+  };
+
   return (
-    <div>
-      <label className="mb-1.5 block text-xs uppercase tracking-widest text-muted-foreground">{label}</label>
-      <input
-        {...rest}
-        className="w-full rounded-lg border border-border bg-background/50 px-4 py-3 text-sm outline-none transition-colors focus:border-primary"
-      />
-    </div>
+    <section id="contact" className="py-24 border-t border-white/5">
+      <div className="mx-auto max-w-7xl px-5">
+        <div className="reveal text-center max-w-2xl mx-auto">
+          <span className="text-xs font-bold uppercase tracking-widest text-[color:var(--ember)]">Contact</span>
+          <h2 className="mt-2 font-display text-4xl sm:text-5xl">Let's talk fitness.</h2>
+          <div className="divider-red mt-6 w-32 mx-auto" />
+        </div>
+
+        <div className="mt-12 grid lg:grid-cols-2 gap-8">
+          <form onSubmit={submit} className="reveal card-glass rounded-2xl p-7 space-y-4">
+            <label className="block">
+              <span className="text-xs uppercase tracking-widest text-foreground/60">Name</span>
+              <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="mt-1 w-full rounded-md border border-white/15 bg-black/40 px-3 py-2.5 outline-none focus:border-[color:var(--blood)]" />
+            </label>
+            <label className="block">
+              <span className="text-xs uppercase tracking-widest text-foreground/60">Email</span>
+              <input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} type="email" className="mt-1 w-full rounded-md border border-white/15 bg-black/40 px-3 py-2.5 outline-none focus:border-[color:var(--blood)]" />
+            </label>
+            <label className="block">
+              <span className="text-xs uppercase tracking-widest text-foreground/60">Message</span>
+              <textarea value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} rows={5} className="mt-1 w-full rounded-md border border-white/15 bg-black/40 px-3 py-2.5 outline-none focus:border-[color:var(--blood)]" />
+            </label>
+            <button className="btn-red w-full rounded-md py-3 text-sm font-bold uppercase tracking-wider"><i className="fa-solid fa-paper-plane mr-2" />Send Message</button>
+          </form>
+
+          <div className="reveal space-y-5">
+            <div className="card-glass rounded-2xl p-6 flex items-start gap-4">
+              <span className="grid h-11 w-11 place-items-center rounded-md bg-[color:var(--blood)] text-white"><i className="fa-solid fa-location-dot" /></span>
+              <div>
+                <h4 className="font-display text-lg">Address</h4>
+                <p className="text-sm text-foreground/75 mt-1">1250 Iron Way, Downtown District, NY 10001</p>
+              </div>
+            </div>
+            <div className="card-glass rounded-2xl p-6 flex items-start gap-4">
+              <span className="grid h-11 w-11 place-items-center rounded-md bg-[color:var(--blood)] text-white"><i className="fa-solid fa-phone" /></span>
+              <div>
+                <h4 className="font-display text-lg">Phone</h4>
+                <p className="text-sm text-foreground/75 mt-1">+1 (555) 234-9800</p>
+              </div>
+            </div>
+            <div className="card-glass rounded-2xl p-6 flex items-start gap-4">
+              <span className="grid h-11 w-11 place-items-center rounded-md bg-[color:var(--blood)] text-white"><i className="fa-solid fa-envelope" /></span>
+              <div>
+                <h4 className="font-display text-lg">Email</h4>
+                <p className="text-sm text-foreground/75 mt-1">hello@powerfitgym.com</p>
+              </div>
+            </div>
+            <div className="rounded-2xl overflow-hidden border border-white/10 h-56">
+              <iframe
+                title="PowerFit Gym Location"
+                src="https://www.openstreetmap.org/export/embed.html?bbox=-74.02%2C40.70%2C-73.96%2C40.75&layer=mapnik"
+                className="w-full h-full"
+                loading="lazy"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }
 
-function ContactRow({ icon, title }: { icon: string; title: string }) {
+function Footer({ scrollTo }: { scrollTo: (id: string) => void }) {
+  const [email, setEmail] = useState("");
+  const sub = (e: FormEvent) => {
+    e.preventDefault();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return toast.error("Enter a valid email");
+    toast.success("Subscribed!");
+    setEmail("");
+  };
+
   return (
-    <div className="flex items-center gap-3 text-sm">
-      <span className="grid h-9 w-9 place-items-center rounded-full bg-primary/15 text-primary">
-        <i className={`fa-solid ${icon}`} />
-      </span>
-      <span>{title}</span>
-    </div>
+    <footer className="border-t border-white/10 bg-black/60">
+      <div className="mx-auto max-w-7xl px-5 py-14 grid md:grid-cols-4 gap-10">
+        <div>
+          <a className="flex items-center gap-2">
+            <span className="grid h-9 w-9 place-items-center rounded-md bg-gradient-to-br from-[color:var(--ember)] to-[color:var(--blood)] text-white"><i className="fa-solid fa-dumbbell" /></span>
+            <span className="font-display text-xl tracking-wider">PowerFit<span className="text-[color:var(--blood)]">.</span></span>
+          </a>
+          <p className="mt-3 text-sm text-foreground/70">Stronger Every Day. Healthier for Life.</p>
+          <div className="mt-4 flex gap-3">
+            {["instagram", "facebook", "twitter", "youtube"].map((s) => (
+              <a key={s} href="#" aria-label={s} className="grid h-9 w-9 place-items-center rounded-full border border-white/15 hover:bg-[color:var(--blood)] hover:border-[color:var(--blood)] transition">
+                <i className={`fa-brands fa-${s} text-sm`} />
+              </a>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <h4 className="font-display text-base mb-3">Quick Links</h4>
+          <ul className="space-y-2 text-sm text-foreground/70">
+            {NAV.slice(0, 5).map((n) => (
+              <li key={n}><a href={`#${n.toLowerCase()}`} onClick={(e) => { e.preventDefault(); scrollTo(n.toLowerCase()); }} className="hover:text-[color:var(--ember)]">{n}</a></li>
+            ))}
+          </ul>
+        </div>
+
+        <div>
+          <h4 className="font-display text-base mb-3">Opening Hours</h4>
+          <ul className="space-y-2 text-sm text-foreground/70">
+            <li>Mon–Fri · 6:00 – 22:00</li>
+            <li>Saturday · 8:00 – 20:00</li>
+            <li>Sunday · 9:00 – 18:00</li>
+            <li className="text-[color:var(--ember)]">24/7 access for members</li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 className="font-display text-base mb-3">Newsletter</h4>
+          <p className="text-sm text-foreground/70 mb-3">Get training tips & exclusive offers.</p>
+          <form onSubmit={sub} className="flex gap-2">
+            <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" placeholder="you@email.com" className="flex-1 min-w-0 rounded-md border border-white/15 bg-black/40 px-3 py-2 text-sm outline-none focus:border-[color:var(--blood)]" />
+            <button className="btn-red rounded-md px-4 text-sm font-bold uppercase"><i className="fa-solid fa-paper-plane" /></button>
+          </form>
+        </div>
+      </div>
+      <div className="border-t border-white/10 py-5 text-center text-xs text-foreground/50">
+        © {new Date().getFullYear()} PowerFit Gym. All rights reserved.
+      </div>
+    </footer>
   );
 }
