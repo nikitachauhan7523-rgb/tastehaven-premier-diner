@@ -287,7 +287,7 @@ function TasteHaven() {
 
       {/* Hero */}
       <section id="home" className="relative isolate flex min-h-screen items-center overflow-hidden">
-        <img src={heroFood} alt="" className="absolute inset-0 h-full w-full object-cover" width={1920} height={1280} />
+        <img src={heroFood} alt="" className="absolute inset-0 h-full w-full object-cover" width={1920} height={1280} fetchPriority="high" decoding="async" />
         <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/70 to-background" />
         <div className="absolute inset-0 bg-radial-hero" />
 
